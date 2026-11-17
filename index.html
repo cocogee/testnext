@@ -62,6 +62,10 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent);
 .item{border:1px solid var(--line);border-radius:10px;padding:18px 18px 14px;margin:16px 0;position:relative;background:var(--card)}
 .item .itemhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
 .tag{font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;color:var(--ink2)}
+.exbanner{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin:0 -16px;padding:12px 16px;background:var(--ink);color:var(--paper);font-family:var(--disp);font-size:14.5px;font-weight:600}
+.exbanner[hidden]{display:none}
+.exbanner button{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+.exbanner button:hover{background:var(--blue-soft);color:var(--paper);border-color:var(--paper)}
 .x{flex:none;width:32px;height:32px;padding:0;border-radius:50%;border-color:var(--line);color:var(--ink2);font-size:18px;line-height:1}
 button{font-family:var(--disp);font-size:14px;font-weight:600;color:var(--ink);background:var(--card);border:1px solid var(--ink);border-radius:999px;padding:9px 20px;cursor:pointer}
 button:hover{background:var(--blue-soft);border-color:var(--blue);color:var(--ink)}
@@ -196,7 +200,7 @@ footer{margin-top:40px;font-size:13.5px;color:var(--ink2);max-width:72ch}
   body.print-onepager #onepager .phead{padding-bottom:8px;margin-bottom:8px}
   body.print-onepager #onepager p{margin:4px 0 6px}
   body{background:#fff}
-  .formcol,header.masthead,.previewlabel,.previewnote,footer,.toolbar{display:none !important}
+  .formcol,header.masthead,.exbanner,.previewlabel,.previewnote,footer,.toolbar{display:none !important}
   .cols{display:block}.previewcol{position:static;max-height:none;overflow:visible}
   .plan{border:none;box-shadow:none;padding:0}
 }
@@ -204,6 +208,7 @@ footer{margin-top:40px;font-size:13.5px;color:var(--ink2);max-width:72ch}
 </head>
 <body>
 <div class="shell">
+<div class="exbanner" id="exBanner" role="status" hidden><span>You're viewing a worked example. Changes here aren't saved.</span><button type="button" id="backToMine">Back to my work</button></div>
 <header class="masthead">
   <div class="eyebrow">Leap to Evidence</div>
   <h1 class="title">From assumptions to interviews</h1>
@@ -453,7 +458,11 @@ function firstAnswer(m,box){const x=S.assumptions.find(s=>s.box===box&&(s.apps||
 function syncModels(){S.apps.forEach(m=>{m.who=firstAnswer(m,'segment');m.problem=firstAnswer(m,'problem');});}
 function liveApps(){return S.apps.filter(a=>(a.who||'').trim()||(a.problem||'').trim());}
 function aText(s){return s.text.trim()||(s.unknown?'Not known yet: '+BOX[s.box].q:'');}
-function save(){syncModels();try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+/* While the example is showing, nothing is saved, so the person's own work stays in storage untouched. */
+let viewingExample=false;
+function loadMine(){let st=null;try{st=JSON.parse(localStorage.getItem(KEY)||'null');}catch(e){}if(!st||!Array.isArray(st.apps))st=blank();return migrate(st);}
+function setExample(on){viewingExample=on;$('#exBanner').hidden=!on;$('#loadExample').hidden=on;}
+function save(){syncModels();if(viewingExample)return;try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function grow(t){t.style.height='auto';t.style.height=t.scrollHeight+'px';}
@@ -992,7 +1001,7 @@ function download(name,text,type){const a=document.createElement('a');a.href=URL
 $('#exportJson').onclick=()=>{download('leap-to-evidence.json',JSON.stringify(S,null,2),'application/json');toast('Downloaded.');};
 $('#importJson').onclick=()=>$('#fileIn').click();
 $('#fileIn').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
-  r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.apps))throw 0;S=migrate(Object.assign(blank(),d));save();renderAll();toast('Loaded.');}catch(err){toast("That file doesn't look like saved work from this tool.");}};
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.apps))throw 0;setExample(false);S=migrate(Object.assign(blank(),d));save();renderAll();toast('Loaded.');}catch(err){toast("That file doesn't look like saved work from this tool.");}};
   r.readAsText(f);e.target.value='';};
 $('#exportCsv').onclick=()=>{
   const cols=['Rank','Box','Business models','Assumption','Based on','Source','If false','Dependencies','Status','Hypothesis','What they do','How much/often','When/where','Counts against it'];
@@ -1017,8 +1026,9 @@ $('#mergeIn').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new Fi
   r.onload=()=>{try{const d=JSON.parse(r.result);const have=new Set(S.interviews.map(v=>v.id));let n=0;
     (d.interviews||[]).forEach(v=>{if(!have.has(v.id)){S.interviews.push(v);n++;}});save();renderAnswers();renderComputed();toast(n?`Added ${n} interview${n>1?'s':''}.`:'No new interviews in that file.');}
     catch(err){toast("That file doesn't look like saved work from this tool.");}};r.readAsText(f);e.target.value='';};
-$('#loadExample').onclick=()=>{if(S.assumptions.length&&!confirm('Replace your work with the example? Download your work first if you want to keep it.'))return;S=migrate(example());save();renderAll();toast('Example loaded.');};
-$('#clearAll').onclick=()=>{if(confirm('Clear everything and start over? Download your work first if you want to keep it.')){S=blank();save();renderAll();}};
+$('#loadExample').onclick=()=>{save();setExample(true);S=migrate(example());renderAll();window.scrollTo(0,0);};
+$('#backToMine').onclick=()=>{setExample(false);S=loadMine();renderAll();window.scrollTo(0,0);toast('Back to your work.');};
+$('#clearAll').onclick=()=>{if(confirm('Clear everything and start over? Download your work first if you want to keep it.')){setExample(false);S=blank();save();renderAll();}};
 renderAll();
 const regrow=()=>document.querySelectorAll('textarea').forEach(grow);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(regrow);

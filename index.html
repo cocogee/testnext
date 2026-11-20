@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Leap to Evidence</title>
+<title>TestNext</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="Turn a startup's leap-of-faith assumptions into a testing order, testable hypotheses and an interview plan.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -210,7 +210,7 @@ footer{margin-top:40px;font-size:13.5px;color:var(--ink2);max-width:72ch}
 <div class="shell">
 <div class="exbanner" id="exBanner" role="status" hidden><span>You're viewing a worked example. Changes here aren't saved.</span><button type="button" id="backToMine">Back to my work</button></div>
 <header class="masthead">
-  <div class="eyebrow">Leap to Evidence</div>
+  <div class="eyebrow">TestNext</div>
   <h1 class="title">From assumptions to interviews</h1>
   <p class="intro">On day one, nearly everything about your business is an assumption: who your customers are, what they need, what they'll pay. You believe these things, but you haven't tested them yet. This tool helps you list your assumptions, decide which to test first, and plan how to test each one, for example with customer discovery interviews.</p>
   <div class="toolbar"><button type="button" id="loadExample">See a worked example</button></div>
@@ -870,7 +870,7 @@ function cardQuestions(s){
 function renderPlan(){
   const app=S.apps.find(a=>a.id===S.plan.app);const role=ROLES[S.plan.role];
   const el=$('#plan');
-  const head=(sub)=>`<div class="phead"><div class="peye">Leap to Evidence · ${sub}</div><h1>${esc(S.idea.trim()||'Your idea')}</h1>`;
+  const head=(sub)=>`<div class="phead"><div class="peye">TestNext · ${sub}</div><h1>${esc(S.idea.trim()||'Your idea')}</h1>`;
   if(S.plan.role==='advisor'){
     const top=ranked().filter(x=>effStatus(x.s)==='now'||effStatus(x.s)==='later').slice(0,5);
     el.innerHTML=`${head('Advisor conversation')}<div class="meta">Advisor or coach · before customer interviews</div></div>
@@ -959,7 +959,7 @@ function renderOnePager(){
   const rows=[['segment','Customer'],['problem','Problem'],['alternatives','What they do now'],['uvp','Why they would choose us']];
   const top=ranked().filter(x=>effStatus(x.s)==='now'||effStatus(x.s)==='later').slice(0,5);
   const blank='<span class="blankline"></span>';
-  $('#onepager').innerHTML=`<div class="phead"><div class="peye">Leap to Evidence · For our advisor</div>
+  $('#onepager').innerHTML=`<div class="phead"><div class="peye">TestNext · For our advisor</div>
       <h1>${esc(S.idea.trim()||'Our idea')}</h1>
       <div class="meta">Date ____________ · Advisor ______________________</div></div>
     <p>Thank you for your time. We'd like your view on which of our assumptions are riskiest, so we test the right things first.</p>
@@ -998,7 +998,7 @@ $('#printPlan').onclick=()=>window.print();
 $('#printOnePager').onclick=()=>{renderOnePager();document.body.classList.add('print-onepager');window.print();};
 window.addEventListener('afterprint',()=>document.body.classList.remove('print-onepager'));
 function download(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
-$('#exportJson').onclick=()=>{download('leap-to-evidence.json',JSON.stringify(S,null,2),'application/json');toast('Downloaded.');};
+$('#exportJson').onclick=()=>{download('testnext.json',JSON.stringify(S,null,2),'application/json');toast('Downloaded.');};
 $('#importJson').onclick=()=>$('#fileIn').click();
 $('#fileIn').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.apps))throw 0;setExample(false);S=migrate(Object.assign(blank(),d));save();renderAll();toast('Loaded.');}catch(err){toast("That file doesn't look like saved work from this tool.");}};
@@ -1008,7 +1008,7 @@ $('#exportCsv').onclick=()=>{
   const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
   const rows=ranked().map((x,i)=>{const s=x.s;
     return [i+1,BOX[s.box].name,BOX[s.box].all?'All':aps(s).map(id=>appLabel(S.apps[appIndex(id)]||{},appIndex(id))).join('; '),aText(s),EVID[effEvid(s)].label,(factSource(s)||{}).text||'',x.c.label,x.r,STATUS[effStatus(s)],hypSentence(s.h),s.h.what,s.h.measure,s.h.context,s.h.falseIf].map(q).join(',');});
-  download('leap-to-evidence-assumptions.csv',[cols.map(q).join(','),...rows].join('\n'),'text/csv');toast('Downloaded.');};
+  download('testnext-assumptions.csv',[cols.map(q).join(','),...rows].join('\n'),'text/csv');toast('Downloaded.');};
 $('#ivSave').onclick=()=>{
   const results={};document.querySelectorAll('#ivResults input:checked').forEach(r=>{results[r.name.slice(2)]=r.value;});
   const v={id:uid(),at:Date.now(),date:$('#ivDate').value||new Date().toISOString().slice(0,10),app:$('#ivApp').value,role:$('#ivRole').value,
@@ -1020,7 +1020,7 @@ $('#ivCsv').onclick=()=>{const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+
   const rows=[];(S.interviews||[]).forEach(v=>{const m=S.apps.find(a=>a.id===v.app);const ent=Object.entries(v.results||{});
     (ent.length?ent:[['','']]).forEach(([id,r])=>{const s=S.assumptions.find(x=>x.id===id);
       rows.push([v.date,m?appLabel(m,appIndex(m.id)):'',ROLES[v.role]?ROLES[v.role].name:v.role,v.source,v.who,(v.signs||[]).length,s?hypSentence(s.h):'',r==='nodata'?'No data':r,v.quote,v.newA].map(q).join(','));});});
-  download('leap-to-evidence-interviews.csv',[cols.map(q).join(','),...rows].join('\n'),'text/csv');toast('Downloaded.');};
+  download('testnext-interviews.csv',[cols.map(q).join(','),...rows].join('\n'),'text/csv');toast('Downloaded.');};
 $('#ivMerge').onclick=()=>$('#mergeIn').click();
 $('#mergeIn').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=()=>{try{const d=JSON.parse(r.result);const have=new Set(S.interviews.map(v=>v.id));let n=0;
